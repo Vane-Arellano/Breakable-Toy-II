@@ -24,8 +24,8 @@ export const FlightComponent = (props: {flight: Flight}) => {
                     </div>
                     <div className="arrival flex flex-col text-right items-right">
                         <PlaneLandingIcon size={20} className="text-blue-500 self-end"/>
-                        <p className="text-xl font-semibold">{props.flight.arraival_time}</p>
-                        <p>{props.flight.arraival_city} {props.flight.arraival_code}</p>
+                        <p className="text-xl font-semibold">{props.flight.arrival_time}</p>
+                        <p>{props.flight.arrival_city} {props.flight.arrival_code}</p>
                     </div>
                 </div>
                 <div className="bottom-section flex flex-row justify-between">

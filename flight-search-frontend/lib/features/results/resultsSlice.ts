@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { flightsInitialState,  } from "./resultsState";
 import { Flight } from "@/app/_interfaces/flights-general";
 
-const flightsSlice = createSlice({
+export const flightsSlice = createSlice({
     name: "flights",
     initialState: flightsInitialState,
     reducers: {
