@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: .  # Uses your existing Dockerfile in the project root
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app  # Mounts local files to enable real-time updates
+      - /app/node_modules  # Prevents overwriting container dependencies
+      - /app/.next  # Ensures the build cache remains stable
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    command: ["bun", "run", "dev"]
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ../flight-search-backend  
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
