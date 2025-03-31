@@ -15,16 +15,19 @@ public class AmadeusConnect {
 
     @Autowired
     RestTemplate restTemplate;
+    EnvConfig envConfig = new EnvConfig();
 
     public AmadeusConnect(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     public String getAccessToken() {
-        String tokenUrl = "https://test.api.amadeus.com/v1/security/oauth2/token";
+        String tokenUrl = envConfig.getApiTokenUrl();
+        String clientId = envConfig.getClientId();
+        String secretKey = envConfig.getSecretKey();
 
         // Prepare the body for OAuth2 request
-        String body = "";
+        String body = String.format("grant_type=client_credentials&client_id=%s&client_secret=%s", clientId, secretKey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
