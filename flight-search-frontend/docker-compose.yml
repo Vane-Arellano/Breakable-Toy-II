@@ -4,11 +4,11 @@ services:
   frontend:
     build:
       context: .  # Uses your existing Dockerfile in the project root
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
       - .:/app  # Mounts local files to enable real-time updates
       - /app/node_modules  # Prevents overwriting container dependencies
-      - /app/.next  # Ensures the build cache remains stable
+      # - /app/.next  # Ensures the build cache remains stable
     ports:
       - "3000:3000"
     environment:
