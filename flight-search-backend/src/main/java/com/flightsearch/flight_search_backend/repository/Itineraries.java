@@ -29,10 +29,10 @@ import com.flightsearch.flight_search_backend.dto.SegmentDTO;
  */
 
 public class Itineraries {
-    public List<ItineraryDTO> mapItineraries(JsonNode offer, ObjectMapper objectMapper) {
+    public ItineraryDTO mapItineraries(JsonNode offer, JsonNode dictionary, ObjectMapper objectMapper) {
 
         List<SegmentDTO> segments = new ArrayList<>(); 
-        List<ItineraryDTO> itineraries = new ArrayList<>(); 
+        ItineraryDTO itineraries = null; 
         
         // Iterate through the itineraries of the flight offer
         for (JsonNode itinerary : offer.path("itineraries")) {
@@ -57,10 +57,22 @@ public class Itineraries {
 
                 // Get carrierCode, operating, flightNumber and aircraftCode for each segment
                 String carrierCode = segment.path("carrierCode").asText();
-                String operatingCarrierCode = segment.path("operatingCarrierCode").asText();
+                String operatingCarrierCode = segment.path("operating").path("carrierCode").asText();
                 String flightNumber = segment.path("number").asText();
                 String aircraftCode = segment.path("aircraft").path("code").asText();
+                
+                String airlineName; 
+                String operatingAirlineName;
+                String aircraftName; 
 
+                airlineName = dictionary.path("carriers").path(carrierCode).asText();
+                operatingAirlineName = dictionary.path("carriers").path(operatingCarrierCode).asText();
+                aircraftName = dictionary.path("aircraft").path(aircraftCode).asText();
+
+                carrierCode = carrierCode.concat(" ").concat(airlineName);
+                operatingCarrierCode = operatingCarrierCode.concat(" ").concat(operatingAirlineName);
+                aircraftCode = aircraftName;
+                
                 // Get into the travelerPricing of the current segment through the segmentIndex
                 JsonNode fareDetailsBySegment = 
                     offer.path("travelerPricings")
@@ -98,7 +110,7 @@ public class Itineraries {
             }
 
             // Once we have all the segments of this itinerary, create a new itinerary object and add it to the itineraries list
-            itineraries.add(new ItineraryDTO(flightDuration, segments));
+            itineraries = new ItineraryDTO(flightDuration, segments);
         }
         return itineraries;
     }
