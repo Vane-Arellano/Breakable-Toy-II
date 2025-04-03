@@ -37,7 +37,7 @@ public class SegmentDTO {
     public String getCarrierCode(){ return carrierCode; }
     public void setCarrierCode(String carrierCode ){ this.carrierCode = carrierCode; }
 
-    public String getOperaionCarrierCode(){ return operationCarrierCode; }
+    public String getOperationCarrierCode(){ return operationCarrierCode; }
     public void setOperationCarrierCode(String operationCarrierCode ){ this.operationCarrierCode = operationCarrierCode; }
 
     public String getFlightNumber(){ return flightNumber; }

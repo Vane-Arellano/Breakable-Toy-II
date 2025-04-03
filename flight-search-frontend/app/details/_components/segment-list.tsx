@@ -1,26 +1,44 @@
 'use client'
 import { SegmentComponent } from "./segment-card"
-import { Segment, Segments } from "../_consts/Segment"
+import { useDetailsStore } from "@/app/_hooks/useDetailsStore"
+import { SegmentI } from "@/app/_interfaces/segment"
+import { LayoverBetween } from "./layover-between"
 
 export const SegmentList = () => {
-
+  const { details } = useDetailsStore(); 
+  
+  const segments = details.itineraries.segments
+  console.log(segments)
   return (
-    <div className="flex flex-col justify-start gap-3 p-10 h-full bg-white rounded-lg">
-      {
-      Segments.length > 1 ? 
-      Segments.map((segment: Segment, index: number) => (
-        <div key={index} className="h-1/5">
+      segments !== undefined && segments.length > 0 ? 
+      <>
+        <div className="flex flex-col justify-start gap-3 h-full bg-white rounded-lg">
           {
-            <SegmentComponent segment={segment} />
-           
-          }
-        </div>
-      )) 
-      : 
-      <SegmentComponent segment={Segments[0]} />
+          segments.length > 1 ? 
+          segments.map((segment: SegmentI, index: number) => (
+            <div key={index} className="flex flex-col gap-5 h-fit">
+              {
+                <>
+                  {
+                    details.timeBetween[index] !== "N/A" ?
+                    <LayoverBetween timeBetween={details.timeBetween[index]} airport={segment.arrival.iataCode}/>
+                   : null
+                  }
+                  <SegmentComponent segment={segment} />
+                  
+                </>
+              }
+            </div>
+          )) 
+          : 
+          <SegmentComponent segment={segments[0]} />
 
-    }
-    </div>
+        }
+        </div>
+      </>
+      
+      :
+      null
   )
 
 }

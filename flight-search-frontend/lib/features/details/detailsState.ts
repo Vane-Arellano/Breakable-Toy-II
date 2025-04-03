@@ -1,13 +1,18 @@
-import { flightDetails } from "@/app/_interfaces/flight-details"
+import { ItineraryI } from "@/app/_interfaces/itinerary"
 
-export const segmentInitialState: flightDetails = {
-    segmentId: 0,
-    cabin: "", 
-    classType: "",
-    deperture_time: "",
-    amanities: [], 
+
+
+export const initialState = {
+    id: "",
+    itineraries: {
+        duration: "", 
+        segments: []
+    } as ItineraryI,
+    timeBetween: [] as string[]
 }
 
 export const detailsInitialState = {
-    segments : [] as flightDetails[]
+    details: initialState,
+    loading: false,
+    error: ""
 }

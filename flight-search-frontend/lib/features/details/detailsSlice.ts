@@ -1,17 +1,23 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { detailsInitialState } from "./detailsState";
-import { flightDetails } from "@/app/_interfaces/flight-details";
+import { FlightDetailsI } from "@/app/_interfaces/flight-details";
 
 export const detailsSlice = createSlice({
     name: "details",
     initialState: detailsInitialState,
     reducers: {
-        setSegments: (state, action: PayloadAction<flightDetails[]>) => {
-            state.segments = action.payload; 
+        setLoading: (state) => {
+            state.loading = true
         },
-        addSegments: (state, action: PayloadAction<flightDetails[]>) => {
-        state.segments.push(...action.payload); 
+        fetchDetailsSuccess: (state, action: PayloadAction<FlightDetailsI>) => {
+            state.details = action.payload;
+            state.loading = false;
+            state.error = "";
         },
-        resetSegments: () => detailsInitialState
+        fetchDetailsFailure: (state, action: PayloadAction<string>) => {
+        state.loading = false;
+        state.error = action.payload;
+        },
+        resetDetails: () => detailsInitialState
     },
   });

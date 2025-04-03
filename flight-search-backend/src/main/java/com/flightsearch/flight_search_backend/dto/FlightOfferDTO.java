@@ -13,11 +13,11 @@ public class FlightOfferDTO {
     private String flightDuration; 
     private List<StopDTO> stops; 
     private PriceDTO price; 
-    private String pricePerTraveler;
+    private PriceDTO pricePerTraveler;
 
     public FlightOfferDTO(String id, String departureDatTime, String arrivalDateTime, String departureAirport,
             String arrivalAirport, String airlineCode, String operatingAirlineCode, String flightDuration,
-            List<StopDTO> stops, PriceDTO price, String pricePerTraveler) {
+            List<StopDTO> stops, PriceDTO price, PriceDTO pricePerTraveler) {
         this.id = id;
         this.departureDateTime = departureDatTime;
         this.arrivalDateTime = arrivalDateTime;
@@ -101,10 +101,10 @@ public class FlightOfferDTO {
         this.price = price;
     }
 
-    public String getPricePerTraveler() {
+    public PriceDTO getPricePerTraveler() {
         return pricePerTraveler;
     }
-    public void setPricePerTraveler(String pricePerTraveler) {
+    public void setPricePerTraveler(PriceDTO pricePerTraveler) {
         this.pricePerTraveler = pricePerTraveler;
     } 
 

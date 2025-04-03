@@ -13,13 +13,17 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightsearch.flight_search_backend.dto.FeesDTO;
 import com.flightsearch.flight_search_backend.dto.FlightDataDTO;
 import com.flightsearch.flight_search_backend.dto.FlightOfferDTO;
 import com.flightsearch.flight_search_backend.dto.ItineraryDTO;
 import com.flightsearch.flight_search_backend.dto.PriceDTO;
+import com.flightsearch.flight_search_backend.dto.RoundFlightDTO;
+import com.flightsearch.flight_search_backend.dto.SegmentDTO;
 import com.flightsearch.flight_search_backend.dto.StopDTO;
 import com.flightsearch.flight_search_backend.service.AmadeusConnect;
 import com.flightsearch.flight_search_backend.service.FlightCache;
+import com.flightsearch.flight_search_backend.service.SortResults;
 
 @Repository
 public class FlightsRepository {
@@ -28,34 +32,60 @@ public class FlightsRepository {
     private final AmadeusConnect amadeusConnect;
     private final ObjectMapper objectMapper = new ObjectMapper(); // JSON parser
     private final FlightCache flightCache = new FlightCache();
+    private final FlightDetailsRepository flightDetailsRepo = new FlightDetailsRepository();
+    private final SortResults sortResults = new SortResults(); 
 
     public FlightsRepository(RestTemplate restTemplate, AmadeusConnect amadeusConnect) {
         this.restTemplate = restTemplate;
         this.amadeusConnect = amadeusConnect;
     }
 
-    public List<FlightOfferDTO> getFlightOffersRepository(String origin, String destination, String departureDate, int adults, String currency, boolean nonStop) {
-
+    public Object getFlightOffersRepository(
+        String origin, String destination, 
+        String departureDate, String returnDate, 
+        int adults, String currency, 
+        boolean nonStop, String sortBy, String sortOrder) {
+        String url;
         // Clear current cache of flight details
         flightCache.clearCache();
-
+        
         // API call to get flights 
         String accessToken = amadeusConnect.getAccessToken();
-        String url = String
-        .format("https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=%s&destinationLocationCode=%s&departureDate=%s&adults=%d&currencyCode=%s&nonStop=%b"
-        , origin, destination, departureDate, adults, currency, nonStop) ;
+        if(returnDate.isEmpty()){
+            url = String
+            .format("https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=%s&destinationLocationCode=%s&departureDate=%s&adults=%d&currencyCode=%s&nonStop=%b"
+            , origin, destination, departureDate, adults, currency, nonStop) ;
+        } else {
+            url = String
+            .format("https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=%s&destinationLocationCode=%s&departureDate=%s&returnDate=%s&adults=%d&currencyCode=%s&nonStop=%b"
+            , origin, destination, departureDate, returnDate, adults, currency, nonStop) ;
+        }
+       
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-        
-        // Save all the details of all flights in cache
-        List<FlightDataDTO> flightDetails = extractFlightDetails(response.getBody()); 
-        flightCache.cacheFlights("details", flightDetails);
 
-        // Return just the flight data (general data of the flight) 
-        return extractFlightData(response.getBody()); 
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            // Save all the details of all flights in cache
+            List<FlightDataDTO> flightDetails = extractFlightDetails(response.getBody()); 
+            flightCache.cacheFlights("details", flightDetails);
+
+            Object results;
+            if(returnDate.isBlank()) {
+                results = extractFlightData(response.getBody());
+            } else {
+                results = extractRoundFlights(response.getBody());
+            }
+            
+            return sortResults.sortFlightResults(results, sortBy, sortOrder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e;
+        }
+        
+        
     }
 
     public FlightDataDTO getFlightDetailsRepository(int id){
@@ -66,14 +96,18 @@ public class FlightsRepository {
     private List<FlightDataDTO> extractFlightDetails(String jsonResponse){
         List<FlightDataDTO> flightDetails = new ArrayList<>();
         Itineraries itineraryClass = new Itineraries(); 
+
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
             JsonNode dataArray = root.path("data");
+            JsonNode dictionary = root.path("dictionaries");
 
             for (JsonNode offer : dataArray) {
                 String id = offer.path("id").asText();
-                List<ItineraryDTO> itineraries = itineraryClass.mapItineraries(offer, objectMapper);
-                flightDetails.add(new FlightDataDTO(id, itineraries));
+                ItineraryDTO itineraries = itineraryClass.mapItineraries(offer, dictionary, objectMapper);
+                List<SegmentDTO> segments = itineraries.getSegments();
+                List<String> timesBetween = flightDetailsRepo.calculateTimeBetweenSegments(segments);
+                flightDetails.add(new FlightDataDTO(id, itineraries, timesBetween));
 
             }
         } catch (Exception e) {
@@ -87,7 +121,7 @@ public class FlightsRepository {
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
             JsonNode dataArray = root.path("data");
-
+            JsonNode dictionary = root.path("dictionaries");
             for (JsonNode offer : dataArray) {
                 String id = offer.path("id").asText();
 
@@ -100,6 +134,8 @@ public class FlightsRepository {
                     String arrivalAirport = "";
                     String airlineCode = "";
                     String operatingAirlineCode = "";
+                    String airlineName; 
+                    String operatinAirlineName;
                 
                     if (segments.isArray() && segments.size() > 0) {
                         JsonNode firstSegment = segments.get(0);
@@ -110,7 +146,10 @@ public class FlightsRepository {
                         arrivalAirport = lastSegment.path("arrival").path("iataCode").asText();
                         airlineCode = firstSegment.path("carrierCode").asText(); 
                         operatingAirlineCode = firstSegment.path("operating").path("carrierCode").asText(); 
-                    
+                        airlineName = dictionary.path("carriers").path(airlineCode).asText();
+                        operatinAirlineName = dictionary.path("carriers").path(operatingAirlineCode).asText();
+                        airlineCode = airlineCode.concat(" ").concat(airlineName);
+                        operatingAirlineCode = operatingAirlineCode.concat(" ").concat(operatinAirlineName);
                     }
 
                     
@@ -129,8 +168,16 @@ public class FlightsRepository {
                     String currency = priceRoot.path("currency").asText(); 
                     String base = priceRoot.path("base").asText(); 
                     String grandTotal = priceRoot.path("grandTotal").asText(); 
-                    PriceDTO price = new PriceDTO(currency, base, grandTotal); 
-                    String pricePerTraveler = offer.path("travelerPricings").get(0).path("price").path("total").asText();
+                    List<FeesDTO> fees = new ArrayList<>();
+                    for(JsonNode fee: priceRoot.path("fees")){
+                        fees.add(new FeesDTO(fee.path("amount").asText(), fee.path("type").asText()));
+                    }
+                    PriceDTO price = new PriceDTO(currency, base, grandTotal, fees); 
+                    JsonNode pricePerTravelerRoot = offer.path("travelerPricings");
+                    String baseTraveler =  pricePerTravelerRoot.get(0).path("price").path("base").asText();
+                    String totalTraveler =  pricePerTravelerRoot.get(0).path("price").path("total").asText();
+
+                    PriceDTO pricePerTraveler = new PriceDTO(currency, baseTraveler, totalTraveler);
 
                     FlightOfferDTO flightOffer = new FlightOfferDTO(
                         id, 
@@ -154,5 +201,19 @@ public class FlightsRepository {
             e.printStackTrace();
         }
         return flightOffers;
+    }
+
+    private List<RoundFlightDTO> extractRoundFlights(String jsonResponse){
+        List<FlightOfferDTO> flights = extractFlightData(jsonResponse); 
+        List<RoundFlightDTO> pairedFlights = new ArrayList<>(); 
+
+        for (int i = 0; i < flights.size(); i += 2) {
+            if (i + 1 < flights.size()) {
+                FlightOfferDTO departureFlight = flights.get(i);
+                FlightOfferDTO returnFlight = flights.get(i+ 1);
+                pairedFlights.add(new RoundFlightDTO(departureFlight, returnFlight));
+            }
+        }
+        return pairedFlights;
     }
 }

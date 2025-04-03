@@ -1,11 +1,9 @@
 package com.flightsearch.flight_search_backend.service;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.flightsearch.flight_search_backend.dto.FlightDataDTO;
-import com.flightsearch.flight_search_backend.dto.FlightOfferDTO;
 import com.flightsearch.flight_search_backend.repository.FlightsRepository;
 
 @Service
@@ -17,12 +15,20 @@ public class Flights {
         this.flightsRepository = flightsRepository;
     }
 
-    public List<FlightOfferDTO> getFlightOffers(String origin, String destination, String departureDate, int adults, String currency, boolean nonStop) {
+    public Object getFlightOffers(
+        String origin, String destination,
+         String departureDate, String returnDate, 
+         int adults, String currency, boolean nonStop,
+         String sortBy, String sortOrder) {
     
-        List<FlightOfferDTO> response = new ArrayList<>();
+        Object response = new ArrayList<>();
 
         try {
-            response = flightsRepository.getFlightOffersRepository(origin, destination, departureDate, adults, currency, nonStop);
+            response = flightsRepository.getFlightOffersRepository(
+                origin, destination, 
+                departureDate, returnDate, 
+                adults, currency, nonStop, 
+                sortBy, sortOrder);
         } catch (Exception e) {
             e.toString();
         }

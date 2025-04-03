@@ -5,16 +5,16 @@ import java.util.List;
 
 public class FlightDataDTO {
     private String id;
-    private List<ItineraryDTO> itineraries; 
+    private ItineraryDTO itineraries; 
     private List<String> timeBetween = new ArrayList<>(); 
 
-    public FlightDataDTO(String id, List<ItineraryDTO> itineraries, List<String> timeBetween){
+    public FlightDataDTO(String id, ItineraryDTO itineraries, List<String> timeBetween){
         this.id = id; 
         this.itineraries = itineraries; 
         this.timeBetween = timeBetween; 
     }
 
-    public FlightDataDTO(String id, List<ItineraryDTO> itineraries){
+    public FlightDataDTO(String id, ItineraryDTO itineraries){
         this.id = id; 
         this.itineraries = itineraries; 
     }
@@ -27,11 +27,11 @@ public class FlightDataDTO {
         this.id = id;
     }
 
-    public List<ItineraryDTO> getItineraries() {
+    public ItineraryDTO getItineraries() {
         return itineraries;
     }
 
-    public void setItineraries(List<ItineraryDTO> itineraries) {
+    public void setItineraries(ItineraryDTO itineraries) {
         this.itineraries = itineraries;
     }
 

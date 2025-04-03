@@ -1,24 +1,28 @@
 'use client'
 import { FlightComponent } from "./flight-component"
-import { demoFlights } from "../_consts/flight"
-import { Flight } from "@/app/_interfaces/flights-general"
-import { redirect } from "next/navigation"
+import { useFlightsStore } from "@/app/_hooks/useFlightsStore"
+import { FlightOffer } from "@/app/_interfaces/flights-general"
+import { RoundFlightComponent } from "./round-flight-component"
+import { RoundFlightI } from "@/app/_interfaces/round-flight"
+
 
 export const FlightList = () => {
 
-  const handleDetailsRedirect = async () => {
-    // TODO: Call the API to get the details of the specific flight 
-    redirect('/details')
-  }
+  
+  const { itineraries, roundedFlights } = useFlightsStore()
 
   return (
-    <div className="p-10 h-full bg-white rounded-lg">
+    <div className="p-10 h-full max-h-[80vh] bg-white rounded-lg overflow-y-scroll">
       {
-        demoFlights.map((flight: Flight, index: number) => (
-          <button key={index} className="mb-4 w-full" onClick={handleDetailsRedirect}>
-            <FlightComponent flight={flight} />
-          </button>
-        ))
+        itineraries.length > 0 ? 
+          itineraries.map((flight: FlightOffer) => (
+            <FlightComponent flight={flight} key={flight.id} />
+          ))
+
+         :
+         roundedFlights.map((roundedFlight: RoundFlightI) => (
+          <RoundFlightComponent flight={roundedFlight} key={roundedFlight.departureFlight.id}/>
+         ))
       }
     </div>
   )
