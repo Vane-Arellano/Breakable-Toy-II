@@ -6,8 +6,15 @@ export const searchSlice = createSlice({
     name: "search",
     initialState: searchInitialState,
     reducers: {
-      setSearchParams: (state, action: PayloadAction<Partial<FlightSearch>>) => {
-        return { ...state, ...action.payload };
+      setLoading: (state) => {
+        state.loading = true
+      },
+      addSearchParam: (state, action: PayloadAction<Partial<FlightSearch>>) => {
+        state.search = {
+          ...state.search,
+          ...action.payload,
+        };
+        state.loading = false
       },
       resetSearch: () => searchInitialState,
     },

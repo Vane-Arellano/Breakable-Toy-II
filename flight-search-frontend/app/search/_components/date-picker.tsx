@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { handleDateChange } from "@/app/_handlers/searchComponentHandlers";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "@/app/_hooks/useSearchParams";
 
 export function DatePickerDemo({ departure }: { departure: boolean }) {
@@ -24,16 +23,10 @@ export function DatePickerDemo({ departure }: { departure: boolean }) {
     return date;
   }, []);
   
-  useEffect(() => {
-    const departureDateD = departureDate ? new Date(departureDate) : today;
-    const returnDateD = returnDate ? new Date(returnDate) : undefined;
-    
-    // setDate(departure ? departureDateD : returnDateD);
-  }, [departureDate, returnDate, departure, today]);
-  // Determine if the component should be disabled
   const isDisabled = !departure && !departureDate;
 
   return (
+    <>
     <Popover>
       <PopoverTrigger asChild>
         <Button
@@ -46,7 +39,11 @@ export function DatePickerDemo({ departure }: { departure: boolean }) {
           disabled={isDisabled}
         >
           <CalendarIcon />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
+          {
+            departure 
+            ? departureDate || <span>Please select departure date</span>
+            : returnDate || <span>Please select return date</span>
+          }
         </Button>
       </PopoverTrigger>
       {!isDisabled && (
@@ -55,8 +52,8 @@ export function DatePickerDemo({ departure }: { departure: boolean }) {
             mode="single"
             selected={date}
             onSelect={(selectedDate) => {
-              setDate(selectedDate); // Update state correctly
-              handleDateChange(selectedDate, dispatch, departure, setDate); // Dispatch update
+              setDate(selectedDate);
+              handleDateChange(selectedDate, dispatch, departure, setDate); 
             }}
             initialFocus
             disabled={(day) => day < today || (!departure && !!departureDate && day < new Date(departureDate))}
@@ -64,5 +61,8 @@ export function DatePickerDemo({ departure }: { departure: boolean }) {
         </PopoverContent>
       )}
     </Popover>
+    
+    </>
+    
   );
 }

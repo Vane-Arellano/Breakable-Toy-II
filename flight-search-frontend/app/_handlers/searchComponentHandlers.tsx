@@ -1,58 +1,77 @@
 import { searchSlice } from "@/lib/features/search/searchSlice";
+import { flightsSlice } from "@/lib/features/results/resultsSlice";
 import { AppDispatch } from "@/lib/store"; // Import your Redux store's dispatch type
 import { getFlights } from "../_service/flights";
 import { FlightSearch } from "../_interfaces/flight-search";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { Dispatch, SetStateAction } from "react";
+import { toast } from "sonner";
+import { FlightOffer } from "../_interfaces/flights-general";
+import { RoundFlightI } from "../_interfaces/round-flight";
 
 
 export const handleSubmit = async (
   event: React.FormEvent,
-  searchParams: Partial<FlightSearch>, // Replace with your actual type
   dispatch: AppDispatch,
-  router: AppRouterInstance,
-  flightSearch : FlightSearch
+  flightSearch : FlightSearch, 
 ) => {
 
   event.preventDefault();
-  dispatch(searchSlice.actions.setSearchParams(searchParams));
-  const res = await getFlights(
-    flightSearch.departure_airport, 
-    flightSearch.arrival_airport, 
-    flightSearch.departure_date, 
-    1, 
-    flightSearch.currency, 
-    flightSearch.non_stop);
 
-  console.log('Results', res)
-  router.push("/results");
-};
+  dispatch(searchSlice.actions.setLoading());
 
-export const handleNonStop = (value: number, dispatch: AppDispatch) => {
-  if (!value) return; 
+  try {
+    const res: FlightOffer[] | RoundFlightI[] = await getFlights(
+      flightSearch.departure_airport, 
+      flightSearch.arrival_airport, 
+      flightSearch.departure_date, 
+      flightSearch.return_date,
+      flightSearch.adults, 
+      flightSearch.currency, 
+      flightSearch.non_stop,
+      flightSearch.sortBy, 
+      flightSearch.sortOrder
+    ) as FlightOffer[] | RoundFlightI[];
 
-  if (value === 0) {
-    dispatch(searchSlice.actions.setSearchParams({ non_stop: false }));
-  } else {
-    dispatch(searchSlice.actions.setSearchParams({ non_stop: true }));
+    console.log('RESULTS: ', res)
+
+    try {
+      if (res != undefined){
+        if(flightSearch.return_date !== ""){
+          dispatch(flightsSlice.actions.setRoundFlights(res as RoundFlightI[]))
+        } else {
+          dispatch(flightsSlice.actions.setItineraries(res as FlightOffer[]))
+        }
+      }
+    } catch (error) {
+      dispatch(flightsSlice.actions.setError(error as string))
+    }
+    
+  } catch (error) {
+    console.log(error)
+    toast('Something went wrong, please try again later')
   }
   
+};
+
+export const handleNonStop = (value: boolean, dispatch: AppDispatch) => {
+  if (!value) return; 
+  dispatch(searchSlice.actions.addSearchParam({ non_stop: value }));
 };
 
 export const handleCurrencyChange = (value: string, dispatch: AppDispatch) => {
   if (!value) return; 
 
-  dispatch(searchSlice.actions.setSearchParams({ currency: value }));
+  dispatch(searchSlice.actions.addSearchParam({ currency: value }));
 };
 
 export const handleSelectAirportChange = (value: string, dispatch: AppDispatch, departure: boolean, setSelectedValue: Dispatch<SetStateAction<string | null>>) => {
   if (!value) return; 
 
   if (departure) {
-    dispatch(searchSlice.actions.setSearchParams({ departure_airport: value }))
+    dispatch(searchSlice.actions.addSearchParam({ departure_airport: value }))
     setSelectedValue(value)
   } else {
-    dispatch(searchSlice.actions.setSearchParams({ arrival_airport: value }));
+    dispatch(searchSlice.actions.addSearchParam({ arrival_airport: value }));
     setSelectedValue(value)
   }
 }
@@ -64,7 +83,13 @@ export const handleDateChange = (value: Date | undefined, dispatch: AppDispatch,
     setDate(value)
   }
   
-  dispatch(searchSlice.actions.setSearchParams(
+  dispatch(searchSlice.actions.addSearchParam(
     departure ? { departure_date: stringDate } : { return_date: stringDate }
   ));
 };
+
+export const handleAdultsChange = (e: React.ChangeEvent<HTMLInputElement>, dispatch: AppDispatch) => {
+    dispatch(searchSlice.actions.addSearchParam(
+      {adults: e.target.value}
+    ));
+}

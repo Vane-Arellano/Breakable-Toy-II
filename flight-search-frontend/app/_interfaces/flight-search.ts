@@ -4,5 +4,14 @@ export interface FlightSearch {
     departure_date: string,
     return_date: string,
     currency: string,
+    adults: string,
     non_stop: boolean
+    sortBy: string, 
+    sortOrder: string
+}
+
+export interface SearchStore {
+    loading: boolean, 
+    search: FlightSearch, 
+    error: string
 }

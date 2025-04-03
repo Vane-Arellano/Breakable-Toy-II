@@ -11,7 +11,7 @@ export const CurrencySelector = () => {
 
   return (
     <Select onValueChange={(value) => handleCurrencyChange(value, dispatch)}>
-      <SelectTrigger className="w-full">
+      <SelectTrigger className="w-full" value={currency}>
         {currency ? currency : "Select a currency"}
       </SelectTrigger>
       <SelectContent>

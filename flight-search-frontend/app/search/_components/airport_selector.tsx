@@ -1,14 +1,11 @@
 "use client";
 
 import { handleSelectAirportChange } from "@/app/_handlers/searchComponentHandlers";
+import { Airport } from "@/app/_interfaces/airport";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 
-interface Airport {
-  name: string;
-  state: string;
-}
 
 export const SelectScrollable = (props: { holder: string, departure: boolean }) => {
   const [query, setQuery] = useState("");
@@ -28,7 +25,7 @@ export const SelectScrollable = (props: { holder: string, departure: boolean }) 
   // Search dynamically when user types
   useEffect(() => {
     if (!allAirports || query.length < 2) {
-      setFilteredOptions([]); // Clear if query is too short
+      setFilteredOptions([]); 
       return;
     }
 
@@ -36,7 +33,8 @@ export const SelectScrollable = (props: { holder: string, departure: boolean }) 
       const filtered = Object.entries(allAirports).filter(
         ([key, airport]) =>
           key.toLowerCase().includes(query.toLowerCase()) ||
-          airport.name.toLowerCase().includes(query.toLowerCase())
+          airport.name.toLowerCase().includes(query.toLowerCase()) ||
+          airport.state.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredOptions(filtered);
     }, 300); // Debounce input
